@@ -2,6 +2,7 @@
 Using the Cycle Gan I have Generated Realistic Smoky Images 
 
 # IMPORTING ALL THE NECESSAERIES LIBRARY
+```python
 import os
 import torch
 import torchvision.transforms as transforms
