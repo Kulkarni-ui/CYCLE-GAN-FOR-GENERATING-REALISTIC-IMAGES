@@ -1,199 +1,74 @@
-# CYCLE-GAN-FOR-GENERATING-REALISTIC-IMAGES
-Using the Cycle Gan I have Generated Realistic Smoky Images 
+# CycleGAN for Satellite Smoke Detection and Image Enhancement
 
-# CODE 
-```python
-import os
-import torch
-import torchvision.transforms as transforms
-from torch.utils.data import Dataset, DataLoader
-from PIL import Image
-import torch.nn as nn
-import matplotlib.pyplot as plt
-import numpy as np
+This project applies CycleGAN to detect smoke emissions from thermal power plants in satellite images. The goal is to enhance the resolution of low-quality images and improve visibility of smoke regions using advanced GAN-based techniques.
 
-# Custom dataset class to load images from a folder
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-from PIL import Image
-import os
+## Project Objective
 
-# Custom Dataset Class
-class SmokeDataset(Dataset):
-    def __init__(self, image_folder, transform=None):
-        self.image_folder = image_folder
-        self.image_files = [f for f in os.listdir(image_folder) if f.endswith(('.jpg', '.jpeg', '.png'))]
-        self.transform = transform
+- Enhance satellite images using CycleGAN.
+- Improve resolution of input images using SRGAN.
+- Detect smoke emissions from power plants using CV techniques.
+- Support environmental monitoring and pollution analysis.
 
-    def __len__(self):
-        return len(self.image_files)
+## Technologies Used
 
-    def __getitem__(self, idx):
-        img_path = os.path.join(self.image_folder, self.image_files[idx])
-        image = Image.open(img_path).convert("RGB")  # Open image in RGB mode
+- Python (Jupyter Notebook)
+- CycleGAN (Image-to-Image Translation)
+- SRGAN (Super-Resolution)
+- OpenCV
+- TensorFlow / PyTorch
+- Google Colab
+- Satellite Imagery from Sentinel-2
 
-        if self.transform:
-            image = self.transform(image)  # Apply transformations
+## Dataset
 
-        return image  # Return actual image tensor
+- Source: Sentinel Hub EO Browser
+- States covered: Maharashtra, Odisha, Uttar Pradesh, Madhya Pradesh, Telangana, Andhra Pradesh
+- Format: RGB satellite images (before and after smoke)
 
-# Define Image Transformations
-transform = transforms.Compose([
-    transforms.Resize((256, 256)),   # Resize image
-    transforms.ToTensor(),           # Convert to tensor
-    transforms.Normalize((0.5,), (0.5,))  # Normalize between [-1, 1]
-])
+## Workflow
 
-# Set Paths
-dataset_path = "/content/drive/MyDrive/EDSR GAN IMAGES"
-dataset = SmokeDataset(dataset_path, transform=transform)
-dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+1. **Data Collection:** Satellite images extracted from Sentinel Hub.
+2. **Preprocessing:** Normalization, resizing, and augmentation.
+3. **Image Enhancement:** CycleGAN for style transfer; SRGAN for super-resolution.
+4. **Smoke Detection:** Thresholding and contour detection to highlight emissions.
+5. **Evaluation Metrics:** PSNR, SSIM, and LPIPS used for assessing image quality.
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+## Results
 
+- Image enhancement resulted in better visibility of smoke plumes.
+- Quantitative improvements in SSIM and PSNR scores.
+- Visual improvement in smoke region identification.
 
-# Creating Generator and Discriminator's Class
+## Repository Structure
 
-import torch.nn as nn
+```
+Cycle_GAN_Smoke_Detection/
+├── Cycle_GAN_.ipynb          # Main Notebook
+├── dataset/                  # Raw and processed satellite images
+├── results/                  # Output samples after GAN and detection
+├── models/                   # CycleGAN and SRGAN architectures
+└── README.md
+```
 
-# Generator
-class Generator(nn.Module):
-    def __init__(self):
-        super(Generator, self).__init__()
-        self.model = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=7, stride=1, padding=3),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 3, kernel_size=7, stride=1, padding=3),
-            nn.Tanh()
-        )
+## How to Run
 
-    def forward(self, x):
-        return self.model(x)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/CycleGAN-Smoke-Detection.git
+   cd CycleGAN-Smoke-Detection
+   ```
+2. Open `Cycle_GAN_.ipynb` in Google Colab.
+3. Upload your dataset or link it via Google Drive.
+4. Run all cells sequentially.
 
-# Discriminator
-class Discriminator(nn.Module):
-    def __init__(self):
-        super(Discriminator, self).__init__()
-        self.model = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(256, 1, kernel_size=4, stride=1, padding=1),
-            nn.Sigmoid()
-        )
+## Future Scope
 
-    def forward(self, x):
-        return self.model(x)
-        
-# Create Generator and Discriminator instances
-import torch.nn as nn
-import torch.optim as optim
+- Integrate real-time smoke alert system using satellite API.
+- Apply attention-based GANs for better localization.
+- Automate smoke region segmentation using deep learning models.
 
+## 🤝 Acknowledgments
 
-# Create Generator and Discriminator instances
-G_A2B = Generator().to(device)  # Generator for A to B
-G_B2A = Generator().to(device)  # Generator for B to A
-D_A = Discriminator().to(device)  # Discriminator for A
-D_B = Discriminator().to(device)  # Discriminator for B
-
-# Define Loss Functions
-criterion_GAN = nn.BCEWithLogitsLoss()  # or nn.MSELoss()  # Choose appropriate loss
-criterion_cycle = nn.L1Loss()
-
-# Define Optimizers
-optimizer_G = optim.Adam(list(G_A2B.parameters()) + list(G_B2A.parameters()), lr=0.0002, betas=(0.5, 0.999))
-optimizer_D_A = optim.Adam(D_A.parameters(), lr=0.0002, betas=(0.5, 0.999))
-optimizer_D_B = optim.Adam(D_B.parameters(), lr=0.0002, betas=(0.5, 0.999))
-
-# TRAINED IT ON 100 EPOCHS
-
-epochs = 100
-
-for epoch in range(epochs):
-    for i, (real_A,) in enumerate(dataloader):  # Unpacking tuple
-        real_A = real_A.to(device)
-
-        # Generate fake images
-        fake_B = G_A2B(real_A)
-        recovered_A = G_B2A(fake_B)
-
-        fake_A = G_B2A(real_A)
-        recovered_B = G_A2B(fake_A)
-
-        # Train Discriminators
-        optimizer_D_A.zero_grad()
-        loss_D_A = criterion_GAN(D_A(fake_A.detach()), torch.zeros_like(D_A(fake_A)).to(device)) + \
-                   criterion_GAN(D_A(real_A), torch.ones_like(D_A(real_A)).to(device))
-        loss_D_A.backward()
-        optimizer_D_A.step()
-
-        optimizer_D_B.zero_grad()
-        loss_D_B = criterion_GAN(D_B(fake_B.detach()), torch.zeros_like(D_B(fake_B)).to(device)) + \
-                   criterion_GAN(D_B(real_A), torch.ones_like(D_B(real_A)).to(device))
-        loss_D_B.backward()
-        optimizer_D_B.step()
-
-        # Train Generators
-        optimizer_G.zero_grad()
-        loss_G_A2B = criterion_GAN(D_B(fake_B), torch.ones_like(D_B(fake_B)).to(device))
-        loss_G_B2A = criterion_GAN(D_A(fake_A), torch.ones_like(D_A(fake_A)).to(device))
-        loss_cycle_A = criterion_cycle(recovered_A, real_A)
-        loss_cycle_B = criterion_cycle(recovered_B, real_A)
-
-        loss_G = loss_G_A2B + loss_G_B2A + 10 * (loss_cycle_A + loss_cycle_B)
-        loss_G.backward()
-        optimizer_G.step()
-
-    print(f"Epoch [{epoch+1}/{epochs}], Loss G: {loss_G.item()}, Loss D_A: {loss_D_A.item()}, Loss D_B: {loss_D_B.item()}")
-
-print("Training Complete!")
-
-# FINAL OUTPUT OF GENRATED IMAGES
-
-import matplotlib.pyplot as plt
-import torchvision.utils as vutils
-import os
-
-# Folder to save generated images
-output_folder = "generated_images"
-os.makedirs(output_folder, exist_ok=True)
-
-# Number of images to generate
-num_images = 10
-
-# Generate multiple images
-for i in range(num_images):
-    real_A = next(iter(dataloader))  # Get a real image
-    real_A = real_A.to(device)
-
-    with torch.no_grad():
-        fake_B = G_A2B(real_A)  # Generate fake image
-
-    # Convert tensors to images
-    real_A_img = (real_A.squeeze(0).cpu().numpy().transpose(1, 2, 0) + 1) / 2
-    fake_B_img = (fake_B.squeeze(0).cpu().numpy().transpose(1, 2, 0) + 1) / 2
-
-    # Plot and save images
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-    axs[0].imshow(real_A_img)
-    axs[0].set_title("Real Image")
-    axs[0].axis("off")
-
-    axs[1].imshow(fake_B_img)
-    axs[1].set_title("Generated Image")
-    axs[1].axis("off")
-
-    plt.savefig(f"{output_folder}/generated_{i+1}.png")  # Save image
-    plt.show()
-
+- Sentinel Hub for EO data access.
+- PyTorch/TensorFlow GAN implementations.
+- Academic inspiration from image-to-image translation and environmental monitoring literature.
