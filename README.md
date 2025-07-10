@@ -23,7 +23,7 @@ This project applies CycleGAN to detect smoke emissions from thermal power plant
 
 - Source: Sentinel Hub EO Browser
 - States covered: Maharashtra, Odisha, Uttar Pradesh, Madhya Pradesh, Telangana, Andhra Pradesh
-- Format: RGB satellite images (before and after smoke)
+- Format: RGB satellite images (before and after smoke).
 
 ## Workflow
 
